@@ -1,0 +1,19 @@
+# This Dockerfile is used to run https://get.aquasec.com/microscanner
+# TOKEN: generated token by: https://microscanner.aquasec.com/signup
+# example: 
+#   docker build --no-cache -f Dockerfile.microscanner -t redis-scanner --build-arg TOKEN=XXYYZZ .
+#
+FROM connections-docker.artifactory.cwp.pnp-hcl.com/middleware-redis
+
+################## BEGIN INSTALLATION ######################
+ARG TOKEN
+
+USER root
+WORKDIR /opt/app
+RUN apk add --no-cache ca-certificates && update-ca-certificates && \
+    wget -O /microscanner https://get.aquasec.com/microscanner && \
+    chmod +x /microscanner && \
+    /microscanner ${TOKEN} && \
+    rm -rf /microscanner
+##################### INSTALLATION END #####################
+CMD ["bash"]

@@ -1,0 +1,12 @@
+*
+!redis-master.conf
+!redis-slave.conf
+!run.sh
+!readiness.sh
+!liveness.sh
+!tools
+!redis-*.tar.gz.sha1
+!tests
+!package.json
+!lib-tests
+!newrelic-plugin-agent.cfg

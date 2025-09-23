@@ -1,0 +1,29 @@
+###################################################################
+# IBM Confidential
+#
+# OCO Source Materials
+#
+# Copyright IBM Corp. 2016, 2017
+#
+# The source code for this program is not published or otherwise
+# divested of its trade secrets, irrespective of what has been
+# deposited with the U.S. Copyright Office.
+###################################################################
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-server
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: redis-server
+    chart: {{ .Chart.Name }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  clusterIP: None
+  ports:
+  - name: redis-server
+    port: 6379
+  selector:
+    app: redis-server

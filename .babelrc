@@ -1,0 +1,12 @@
+{
+	"presets": ["nodejs6", "stage-0"],
+	"env": {
+	 "test": {
+		 "plugins": ["rewire", ["module-alias", [
+      { "tests": "./tests", "expose": "tests" }
+    ]]]
+	 }
+ 	}
+}
+//Add module exports for babel 6 to support require("") amd syntax - otherwise require("").default
+

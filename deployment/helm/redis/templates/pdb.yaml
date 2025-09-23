@@ -1,0 +1,10 @@
+apiVersion: policy/v1beta1
+kind: PodDisruptionBudget
+metadata:
+  name: redis-server
+  namespace: {{ .Values.namespace }}
+spec:
+  selector:
+    matchLabels:
+      app: redis-server
+  minAvailable: 2

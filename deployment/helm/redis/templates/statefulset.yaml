@@ -1,0 +1,160 @@
+###################################################################
+# IBM Confidential
+#
+# OCO Source Materials
+#
+# Copyright IBM Corp. 2016, 2017
+#
+# The source code for this program is not published or otherwise
+# divested of its trade secrets, irrespective of what has been
+# deposited with the U.S. Copyright Office.
+###################################################################
+{{- if .Capabilities.APIVersions.Has "apps/v1" }}
+apiVersion: apps/v1
+{{- else }}
+apiVersion: apps/v1beta1
+{{- end }}
+kind: StatefulSet
+metadata:
+  name: redis-server
+  namespace: {{ .Values.namespace }}
+spec:
+  selector:
+    matchLabels:
+      app: redis-server
+      mService: redis-server
+      chart: {{ .Chart.Name }}
+      release: {{ .Release.Name }}
+      heritage: {{ .Release.Service }}
+  serviceName: redis-server
+  replicas: {{ .Values.replicaCount }}
+  {{- if and (ge .Capabilities.KubeVersion.Major "1") (ge .Capabilities.KubeVersion.Minor "7") }}
+  updateStrategy:
+    type: RollingUpdate
+  {{- end }}
+  template:
+    metadata:
+      labels:
+        app: redis-server
+        mService: redis-server
+        chart: {{ .Chart.Name }}
+        release: {{ .Release.Name }}
+        heritage: {{ .Release.Service }}
+    spec:
+      terminationGracePeriodSeconds: 10
+      affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 1
+            preference:
+              matchExpressions:
+              - key: "type"
+                operator: In
+                values: ["generic"]
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 1
+            podAffinityTerm:
+              topologyKey: "kubernetes.io/hostname"
+              labelSelector:
+                matchExpressions:
+                 - key: "mService"
+                   operator: In
+                   values: ["redis-sentinel", "redis-server"]
+      containers:
+      - name: redis-server
+{{- if .Values.global.onPrem }}
+        image: {{ .Values.global.image.repository }}/middleware-redis:{{ .Values.image.tag }}
+{{- else }}
+        image: {{ .Values.image.repository }}/middleware-redis:{{ .Values.image.tag }}
+{{- end }}
+        resources:
+            limits:
+              cpu: {{ .Values.resources.redisServer.limits.cpu }}
+              memory: {{ .Values.resources.redisServer.limits.memory }}
+            requests:
+              cpu: {{ .Values.resources.redisServer.requests.cpu }}
+              memory: {{ .Values.resources.redisServer.requests.memory }}
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        securityContext:
+          runAsUser: 1000
+          runAsNonRoot: true
+          allowPrivilegeEscalation: false
+        env:
+          - name: STATEFULSET
+            value: 'true'
+          - name: REDIS_CLIENT_TIMEOUT
+            value: '{{ .Values.env.redisServer.clientTimeoutInSecs }}'
+          - name: REDIS_SLAVE_WAIT_FOR_MASTER_DELAY
+            value: '{{ .Values.env.redisServer.waitForMasterDelayInSecs }}'
+          - name: REDIS_SENTINEL_NODE_SERVICE_NAME
+            valueFrom:
+              configMapKeyRef:
+                name: connections-env
+                key: redis-sentinel-node-service-name
+          - name: REDIS_SENTINEL_NODE_SERVICE_PORT
+            valueFrom:
+              configMapKeyRef:
+                name: connections-env
+                key: redis-sentinel-node-service-port
+          - name: REDIS_AUTH_ENABLED
+            valueFrom:
+              configMapKeyRef:
+                name: connections-env
+                key: redis-auth-enabled
+          - name: INSTANCE_PORT
+            value: "6379"
+          - name: NEWRELIC_ENABLED
+            {{ if .Values.env.newRelic.enable }}
+            value: {{ .Values.env.newRelic.enable | quote }}
+            {{ else }}
+            valueFrom:
+              configMapKeyRef:
+                name: connections-env
+                key: new-relic-enabled
+            {{ end }}
+          - name: NEWRELIC_API_KEY
+            {{ if .Values.env.newRelic.licenseKey }}
+            value: {{ .Values.env.newRelic.licenseKey }}
+            {{ else }}
+            valueFrom:
+              secretKeyRef:
+                name: new-relic-secret
+                key: new-relic-license-key
+            {{ end }}
+          - name: NUM_REPLICAS
+            value: "{{ .Values.replicaCount }}"
+          - name: KUBERNETES_CLUSTER_DOMAIN
+            value: "{{ .Values.env.k8s_cluster_domain }}"
+        ports:
+        - containerPort: 6379
+          name: redis-server
+        readinessProbe:
+          exec:
+            command:
+            - /bin/sh
+            - '-c'
+            - /usr/bin/readiness.sh
+          initialDelaySeconds: 30
+          periodSeconds: 60
+          timeoutSeconds: 15
+          failureThreshold: 3
+        livenessProbe:
+          exec:
+            command:
+            - /bin/sh
+            - '-c'
+            - /usr/bin/liveness.sh
+          initialDelaySeconds: 300
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        volumeMounts:
+            - name: redis-secret-vol
+              mountPath: /etc/redis/redis-secret
+      volumes:
+        - name: redis-secret-vol
+          secret:
+            secretName: redis-secret
+      imagePullSecrets:
+       - name: {{ .Values.imagePullSecrets.name }}

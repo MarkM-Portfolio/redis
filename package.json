@@ -1,0 +1,53 @@
+{
+  "name": "redisTester",
+  "version": "1.0.0",
+  "description": "Redis Tester",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Info: no test applicable. Is a tester app.\" && exit 0",
+    "build:tests": "rimraf ./lib-tests/ && cross-env BABEL_ENV=commonjs babel ./tests --out-dir ./lib-tests --copy-files"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.ibm.com/connections/redis.git"
+  },
+  "keywords": [
+    "Redis",
+    "Governor",
+    "Tester"
+  ],
+  "author": "Starboard Squad",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.ibm.com/connections/connections-planning/issues"
+  },
+  "homepage": "https://github.ibm.com/connections/redis/blob/master/README.md",
+  "devDependencies": {
+    "babel-cli": "6.18.0",
+    "babel-core": "6.18.0",
+    "babel-eslint": "7.2.3",
+    "babel-plugin-module-alias": "1.5.0",
+    "babel-plugin-rewire": "1.0.0-rc-3",
+    "babel-preset-nodejs6": "^1.0.0",
+    "babel-preset-react": "6.16.0",
+    "babel-preset-stage-0": "6.16.0",
+    "cross-env": "1.0.7",
+    "eslint": "^3.11.1",
+    "eslint-config-airbnb-base": "^10.0.1",
+    "eslint-config-ess": "3.0.1",
+    "eslint-config-prettier": "^2.7.0",
+    "eslint-plugin-import": "^2.2.0",
+    "gulp": "3.9.1",
+    "ic-gulp-ut": "*",
+    "karma": "0.13.21",
+    "nodemon": "1.8.1",
+    "nsp": "^2.1.0",
+    "prettier": "^1.8.2"
+  },
+  "dependencies": {
+    "ioredis": "^2.5.0",
+    "openssl-wrapper": "^0.3.4",
+    "@connections/utils-logger": "3.1.0",
+    "@connections/utils-pubsub": "^2.0.6"
+  }
+}

@@ -1,0 +1,59 @@
+# This is the docker file for build the tester image
+
+FROM connections-docker.artifactory.cwp.pnp-hcl.com/application-tester
+
+COPY lib-tests /usr/src/app/tests
+COPY package.json /usr/src/app/tests/package.json
+
+WORKDIR /usr/src/app/tests
+
+RUN chmod +x /usr/src/app/tests/runtest.sh
+
+RUN npm install --production --registry https://artifactory.cwp.pnp-hcl.com/artifactory/api/npm/v-ess-npm-dev
+
+RUN apk apk update \
+        && apk upgrade \
+	&& apk add --no-cache --update bash \
+        && rm -rf /var/cache/apk/*
+
+ENV REDIS_VERSION 3.2.12
+ADD redis-$REDIS_VERSION.tar.gz.sha1 /tmp/
+RUN addgroup -S redis && adduser -S -G redis redis
+
+RUN cd /tmp/; \
+	\
+	apk add --no-cache --virtual .build-deps \
+		coreutils \
+		gcc \
+		linux-headers \
+		make \
+		musl-dev \
+		curl \ 
+	; \
+	\
+	curl -SLOk "https://artifactory.cwp.pnp-hcl.com/artifactory/connections-3rd-party/redis/$REDIS_VERSION/redis-$REDIS_VERSION.tar.gz"; \
+	sha1sum -c redis-$REDIS_VERSION.tar.gz.sha1; \
+	mkdir -p /usr/src/redis; \
+	tar -xzf redis-$REDIS_VERSION.tar.gz -C /usr/src/redis --strip-components=1; \
+	rm redis-$REDIS_VERSION.tar.gz.sha1; \
+	rm redis-$REDIS_VERSION.tar.gz; \
+	\
+# disable Redis protected mode [1] as it is unnecessary in context of Docker
+# (ports are not automatically exposed when running inside Docker, but rather explicitly by specifying -p / -P)
+# [1]: https://github.com/antirez/redis/commit/edd4d555df57dc84265fdfb4ef59a4678832f6da
+	grep -q '^#define CONFIG_DEFAULT_PROTECTED_MODE 1$' /usr/src/redis/src/server.h; \
+	sed -ri 's!^(#define CONFIG_DEFAULT_PROTECTED_MODE) 1$!\1 0!' /usr/src/redis/src/server.h; \
+	grep -q '^#define CONFIG_DEFAULT_PROTECTED_MODE 0$' /usr/src/redis/src/server.h; \
+# for future reference, we modify this directly in the source instead of just supplying a default configuration flag because apparently "if you specify any argument to redis-server, [it assumes] you are going to specify everything"
+# see also https://github.com/docker-library/redis/issues/4#issuecomment-50780840
+# (more exactly, this makes sure the default behavior of "save on SIGTERM" stays functional by default)
+	\
+	make -C /usr/src/redis -j "$(nproc)"; \
+	make -C /usr/src/redis install; \
+	\
+	rm -r /usr/src/redis; \
+	\
+	apk del .build-deps
+
+
+WORKDIR /app

@@ -1,0 +1,65 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "redis-tests"
+  namespace: {{ .Values.namespace }}
+  annotations:
+    "helm.sh/hook": test-success
+spec:
+  containers:
+  - name: redis-tests
+    image: "{{ .Values.image.repository }}/middleware-redis-tester:{{ .Values.image.tag }}"
+    imagePullPolicy: {{ .Values.image.pullPolicy }}
+    resources:
+       limits:
+         cpu: "{{ .Values.resources.tester.limits.cpu }}"
+         memory: "{{ .Values.resources.tester.limits.memory }}"
+       requests:
+         cpu: "{{ .Values.resources.tester.requests.cpu }}"
+         memory: "{{ .Values.resources.tester.requests.memory }}"
+    env:
+    - name: REDIS_AUTH_ENABLED
+      valueFrom:
+        configMapKeyRef:
+          name: connections-env
+          key: redis-auth-enabled
+    - name: REDIS_HOST
+      valueFrom:
+        configMapKeyRef:
+          name: connections-env
+          key: redis-node-service-name
+    - name: REDIS_PORT
+      valueFrom:
+        configMapKeyRef:
+          name: connections-env
+          key: redis-node-service-port
+    - name: REDIS_OPTIONS
+      valueFrom:
+        configMapKeyRef:
+          name: connections-env
+          key: redis-options
+    - name: REDIS_SENTINEL_NODE_SERVICE_NAME
+      valueFrom:
+        configMapKeyRef:
+          name: connections-env
+          key: redis-sentinel-node-service-name
+    - name: REDIS_SENTINEL_NODE_SERVICE_PORT
+      valueFrom:
+        configMapKeyRef:
+          name: connections-env
+          key: redis-sentinel-node-service-port
+    - name: REDIS_INSTALLED
+      value: "false"  
+    - name: NUM_REPLICAS
+      value: "{{ .Values.replicaCount }}"
+    command: ["sh", "-c", "/usr/src/app/tests/runtest.sh"]
+    volumeMounts:
+     - name: redis-secret-vol
+       mountPath: /etc/redis/redis-secret
+  restartPolicy: Never
+  volumes:
+   - name: redis-secret-vol
+     secret:
+       secretName: redis-secret
+  imagePullSecrets:
+    - name: {{ .Values.imagePullSecrets.name }}

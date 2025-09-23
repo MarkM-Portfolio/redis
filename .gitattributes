@@ -1,0 +1,22 @@
+**/Chart.yaml linguist-language=Kubernetes linguist-vendored=false
+**/pdb.yaml linguist-language=Kubernetes linguist-vendored=false
+**/redis-tester.yaml linguist-language=Kubernetes linguist-vendored=false
+**/service.yaml linguist-language=Kubernetes linguist-vendored=false
+**/statefulset.yaml linguist-language=Kubernetes linguist-vendored=false
+**/values.yaml linguist-language=Kubernetes linguist-vendored=false
+*.babelrc linguist-language=Babelrc linguist-vendored=false
+*.cfg linguist-language=Config File linguist-vendored=false
+*.conf linguist-language=Conf linguist-vendored=false
+*.dockerignore linguist-language=Docker linguist-vendored=false
+*.gitignore linguist-language=Git linguist-vendored=false
+*.helmignore linguist-language=Helmignore linguist-vendored=false
+*.js linguist-language=JavaScript linguist-vendored=false
+*.json linguist-language=JSON linguist-vendored=false
+*.md linguist-language=Markdown linguist-vendored=false
+*.microscanner linguist-language=Microscanner linguist-vendored=false
+*.sh linguist-language=Bash linguist-vendored=false
+*.sha1 linguist-language=Sha1 linguist-vendored=false
+*.tester linguist-language=Tester linguist-vendored=false
+*.tpl linguist-language=Template File linguist-vendored=false
+*.txt linguist-language=Text File linguist-vendored=false
+Dockerfile linguist-language=Docker linguist-vendored=false
